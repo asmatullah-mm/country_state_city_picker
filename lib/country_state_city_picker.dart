@@ -4,142 +4,140 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:reactive_forms/reactive_forms.dart';
 
 import 'model/select_status_model.dart' as StatusModel;
+import '../widgets/custom_dropdown_widget.dart';
 
-class SelectState extends StatefulWidget {
+class CountryStateCityPicker extends StatefulWidget {
   final ValueChanged<String> onCountryChanged;
   final ValueChanged<String> onStateChanged;
   final ValueChanged<String> onCityChanged;
-  final TextStyle? style;
-  final Color? dropdownColor;
+  final FormControl countryFormControl;
+  final FormControl stateFormControl;
+  final FormControl cityFormControl;
+  final String? countryLabel;
+  final String? stateLabel;
+  final String? cityLabel;
+  final Widget? suffixWidget;
 
-  const SelectState(
-      {Key? key,
-      required this.onCountryChanged,
-      required this.onStateChanged,
-      required this.onCityChanged,
-      this.style,
-      this.dropdownColor})
-      : super(key: key);
+  const CountryStateCityPicker({
+    Key? key,
+    required this.onCountryChanged,
+    required this.onStateChanged,
+    required this.onCityChanged,
+    required this.countryFormControl,
+    required this.stateFormControl,
+    required this.cityFormControl,
+    this.countryLabel,
+    this.stateLabel,
+    this.cityLabel,
+    this.suffixWidget,
+  }) : super(key: key);
 
   @override
-  _SelectStateState createState() => _SelectStateState();
+  _CountryStateCityPickerState createState() => _CountryStateCityPickerState();
 }
 
-class _SelectStateState extends State<SelectState> {
-  List<String> _cities = ["Choose City"];
-  List<String> _country = ["Choose Country"];
-  String _selectedCity = "Choose City";
-  String _selectedCountry = "Choose Country";
-  String _selectedState = "Choose State";
-  List<String> _states = ["Choose State"];
-  var responses;
+class _CountryStateCityPickerState extends State<CountryStateCityPicker> {
+  late Future<List> jsonDataFuture;
+  List<String> _availableCountries = [];
+  List<String> _availableCities = [];
+  List<String> _availableStates = [];
+  var jsonResponse;
 
   @override
   void initState() {
-    getCounty();
+    jsonDataFuture = _initData();
     super.initState();
   }
 
-  Future getResponse() async {
+  Future<List> _initData() async {
     var res = await rootBundle.loadString(
-        'packages/country_state_city_picker/lib/assets/country.json');
-    return jsonDecode(res);
+      'packages/country_state_city_picker/lib/assets/country.json',
+    );
+    jsonResponse = jsonDecode(res) as List;
+    return jsonResponse;
   }
 
-  Future getCounty() async {
-    var countryres = await getResponse() as List;
-    countryres.forEach((data) {
-      var model = StatusModel.StatusModel();
-      model.name = data['name'];
-      model.emoji = data['emoji'];
-      if (!mounted) return;
-      setState(() {
-        _country.add(model.emoji! + "    " + model.name!);
+  setCountries() {
+    if (jsonResponse != null) {
+      jsonResponse.forEach((data) {
+        var model = StatusModel.StatusModel();
+        model.name = data['name'];
+        _availableCountries.add(model.name!);
       });
-    });
-
-    return _country;
+    }
   }
 
-  Future getState() async {
-    var response = await getResponse();
-    var takestate = response
-        .map((map) => StatusModel.StatusModel.fromJson(map))
-        .where((item) => item.emoji + "    " + item.name == _selectedCountry)
-        .map((item) => item.state)
-        .toList();
-    var states = takestate as List;
-    states.forEach((f) {
-      if (!mounted) return;
-      setState(() {
+  setStates() {
+    if (jsonResponse != null) {
+      var takeState = jsonResponse
+          .map((map) => StatusModel.StatusModel.fromJson(map))
+          .where(
+            (item) => item.name == _getControlValue(widget.countryFormControl),
+          )
+          .map((item) => item.state)
+          .toList();
+      var states = takeState as List;
+      states.forEach((f) {
         var name = f.map((item) => item.name).toList();
-        for (var statename in name) {
-          print(statename.toString());
-
-          _states.add(statename.toString());
+        for (var stateName in name) {
+          _availableStates.add(stateName.toString());
         }
       });
-    });
-
-    return _states;
+    }
   }
 
-  Future getCity() async {
-    var response = await getResponse();
-    var takestate = response
-        .map((map) => StatusModel.StatusModel.fromJson(map))
-        .where((item) => item.emoji + "    " + item.name == _selectedCountry)
-        .map((item) => item.state)
-        .toList();
-    var states = takestate as List;
-    states.forEach((f) {
-      var name = f.where((item) => item.name == _selectedState);
-      var cityname = name.map((item) => item.city).toList();
-      cityname.forEach((ci) {
-        if (!mounted) return;
-        setState(() {
-          var citiesname = ci.map((item) => item.name).toList();
-          for (var citynames in citiesname) {
-            print(citynames.toString());
-
-            _cities.add(citynames.toString());
+  setCities() {
+    if (jsonResponse != null) {
+      var takeState = jsonResponse
+          .map((map) => StatusModel.StatusModel.fromJson(map))
+          .where(
+            (item) => item.name == _getControlValue(widget.countryFormControl),
+          )
+          .map((item) => item.state)
+          .toList();
+      var states = takeState as List;
+      states.forEach((f) {
+        var name = f.where(
+          (item) => item.name == _getControlValue(widget.stateFormControl),
+        );
+        var cityName = name.map((item) => item.city).toList();
+        cityName.forEach((ci) {
+          var citiesName = ci.map((item) => item.name).toList();
+          for (var cityNames in citiesName) {
+            _availableCities.add(cityNames.toString());
           }
         });
       });
-    });
-    return _cities;
+    }
+  }
+
+  _getControlValue(FormControl control) {
+    String value = '';
+    try {
+      value = control.value as String;
+    } catch (e) {}
+    return value;
   }
 
   void _onSelectedCountry(String value) {
-    if (!mounted) return;
-    setState(() {
-      _selectedState = "Choose State";
-      _states = ["Choose State"];
-      _selectedCountry = value;
-      this.widget.onCountryChanged(value);
-      getState();
-    });
+    this.widget.onCountryChanged(value);
+    widget.stateFormControl.value = null;
+    widget.cityFormControl.value = null;
+    _availableStates = [];
+    _availableCities = [];
   }
 
   void _onSelectedState(String value) {
-    if (!mounted) return;
-    setState(() {
-      _selectedCity = "Choose City";
-      _cities = ["Choose City"];
-      _selectedState = value;
-      this.widget.onStateChanged(value);
-      getCity();
-    });
+    this.widget.onStateChanged(value);
+    widget.cityFormControl.value = null;
+    _availableCities = [];
   }
 
   void _onSelectedCity(String value) {
-    if (!mounted) return;
-    setState(() {
-      _selectedCity = value;
-      this.widget.onCityChanged(value);
-    });
+    this.widget.onCityChanged(value);
   }
 
   @override
@@ -147,52 +145,82 @@ class _SelectStateState extends State<SelectState> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        DropdownButton<String>(
-          dropdownColor: widget.dropdownColor,
-          isExpanded: true,
-          items: _country.map((String dropDownStringItem) {
-            return DropdownMenuItem<String>(
-              value: dropDownStringItem,
-              child: Row(
-                children: [
-                  Text(
-                    dropDownStringItem,
-                    style: widget.style,
-                  )
-                ],
-              ),
-            );
-          }).toList(),
-          onChanged: (value) => _onSelectedCountry(value!),
-          value: _selectedCountry,
-        ),
-        DropdownButton<String>(
-          dropdownColor: widget.dropdownColor,
-          isExpanded: true,
-          items: _states.map((String dropDownStringItem) {
-            return DropdownMenuItem<String>(
-              value: dropDownStringItem,
-              child: Text(dropDownStringItem, style: widget.style),
-            );
-          }).toList(),
-          onChanged: (value) => _onSelectedState(value!),
-          value: _selectedState,
-        ),
-        DropdownButton<String>(
-          dropdownColor: widget.dropdownColor,
-          isExpanded: true,
-          items: _cities.map((String dropDownStringItem) {
-            return DropdownMenuItem<String>(
-              value: dropDownStringItem,
-              child: Text(dropDownStringItem, style: widget.style),
-            );
-          }).toList(),
-          onChanged: (value) => _onSelectedCity(value!),
-          value: _selectedCity,
-        ),
+        FutureBuilder<List>(
+            future: jsonDataFuture,
+            builder: (context, snapshot) {
+              setCountries();
+              return ReactiveDropDownWidget(
+                formControl: widget.countryFormControl,
+                label: widget.countryLabel ?? 'Country/Region',
+                validationMessages: {
+                  ValidationMessage.required: 'This field is required'
+                },
+                onChanged: (value) => _onSelectedCountry(value!),
+                items: _availableCountries.map((String dropDownStringItem) {
+                  return DropdownMenuItem<String>(
+                    child: Text(dropDownStringItem),
+                    value: dropDownStringItem,
+                  );
+                }).toList(),
+                suffixWidget: widget.suffixWidget,
+              );
+            }),
         SizedBox(
-          height: 10.0,
+          height: 16,
         ),
+        FutureBuilder<List>(
+            future: jsonDataFuture,
+            builder: (context, snapshot) {
+              return ReactiveValueListenableBuilder(
+                formControl: widget.countryFormControl,
+                builder: (context, control, child) {
+                  setStates();
+                  return ReactiveDropDownWidget(
+                    formControl: widget.stateFormControl,
+                    label: widget.stateLabel ?? 'State',
+                    validationMessages: {
+                      ValidationMessage.required: 'This field is required'
+                    },
+                    onChanged: (value) => _onSelectedState(value!),
+                    items: _availableStates.map((String dropDownStringItem) {
+                      return DropdownMenuItem<String>(
+                        child: Text(dropDownStringItem),
+                        value: dropDownStringItem,
+                      );
+                    }).toList(),
+                    suffixWidget: widget.suffixWidget,
+                  );
+                },
+              );
+            }),
+        SizedBox(
+          height: 16,
+        ),
+        FutureBuilder<List>(
+            future: jsonDataFuture,
+            builder: (context, snapshot) {
+              return ReactiveValueListenableBuilder(
+                formControl: widget.stateFormControl,
+                builder: (context, control, child) {
+                  setCities();
+                  return ReactiveDropDownWidget(
+                    formControl: widget.cityFormControl,
+                    label: widget.cityLabel ?? 'City',
+                    validationMessages: {
+                      ValidationMessage.required: 'This field is required'
+                    },
+                    onChanged: (value) => _onSelectedCity(value!),
+                    items: _availableCities.map((String dropDownStringItem) {
+                      return DropdownMenuItem<String>(
+                        child: Text(dropDownStringItem),
+                        value: dropDownStringItem,
+                      );
+                    }).toList(),
+                    suffixWidget: widget.suffixWidget,
+                  );
+                },
+              );
+            }),
       ],
     );
   }
