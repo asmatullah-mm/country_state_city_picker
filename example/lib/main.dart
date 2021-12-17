@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:country_state_city_picker/country_state_city_picker.dart';
 import 'package:reactive_forms/reactive_forms.dart';
+import 'package:country_state_city_picker/country_state_city_picker.dart';
 
 void main() {
   runApp(MyApp());
@@ -61,7 +61,7 @@ class _MyHomePageState extends State<MyHomePage> {
               CountryStateCityPicker(
                 countryFormControl: formGroup.control('country'),
                 stateFormControl: formGroup.control('province'),
-                cityFormControl: formGroup.control('city'),
+                // cityFormControl: formGroup.control('city'),
                 onCountryChanged: (value) {
                   print(value);
                   // setState(() {
@@ -74,12 +74,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   //   stateValue = value;
                   // });
                 },
-                onCityChanged: (value) {
-                  print(value);
-                  // setState(() {
-                  //   cityValue = value;
-                  // });
-                },
+                // onCityChanged: (value) {
+                //   print(value);
+                //   // setState(() {
+                //   //   cityValue = value;
+                //   // });
+                // },
               ),
               SizedBox(
                 height: 16,

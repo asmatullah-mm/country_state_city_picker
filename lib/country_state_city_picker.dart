@@ -12,26 +12,26 @@ import '../widgets/custom_dropdown_widget.dart';
 class CountryStateCityPicker extends StatefulWidget {
   final ValueChanged<String> onCountryChanged;
   final ValueChanged<String> onStateChanged;
-  final ValueChanged<String> onCityChanged;
+  // final ValueChanged<String> onCityChanged;
   final FormControl countryFormControl;
   final FormControl stateFormControl;
-  final FormControl cityFormControl;
+  // final FormControl cityFormControl;
   final String? countryLabel;
   final String? stateLabel;
-  final String? cityLabel;
+  // final String? cityLabel;
   final Widget? suffixWidget;
 
   const CountryStateCityPicker({
     Key? key,
     required this.onCountryChanged,
     required this.onStateChanged,
-    required this.onCityChanged,
+    // required this.onCityChanged,
     required this.countryFormControl,
     required this.stateFormControl,
-    required this.cityFormControl,
+    // required this.cityFormControl,
     this.countryLabel,
     this.stateLabel,
-    this.cityLabel,
+    // this.cityLabel,
     this.suffixWidget,
   }) : super(key: key);
 
@@ -42,7 +42,8 @@ class CountryStateCityPicker extends StatefulWidget {
 class _CountryStateCityPickerState extends State<CountryStateCityPicker> {
   late Future<List> jsonDataFuture;
   List<String> _availableCountries = [];
-  List<String> _availableCities = [];
+  // List<String> _availableCities = [];
+  late List<String> _availableCities;
   List<String> _availableStates = [];
   var jsonResponse;
 
@@ -125,20 +126,20 @@ class _CountryStateCityPickerState extends State<CountryStateCityPicker> {
   void _onSelectedCountry(String value) {
     this.widget.onCountryChanged(value);
     widget.stateFormControl.value = null;
-    widget.cityFormControl.value = null;
+    // widget.cityFormControl.value = null;
     _availableStates = [];
-    _availableCities = [];
+    // _availableCities = [];
   }
 
   void _onSelectedState(String value) {
     this.widget.onStateChanged(value);
-    widget.cityFormControl.value = null;
-    _availableCities = [];
+    // widget.cityFormControl.value = null;
+    // _availableCities = [];
   }
 
-  void _onSelectedCity(String value) {
-    this.widget.onCityChanged(value);
-  }
+  // void _onSelectedCity(String value) {
+  //   this.widget.onCityChanged(value);
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -146,82 +147,101 @@ class _CountryStateCityPickerState extends State<CountryStateCityPicker> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
         FutureBuilder<List>(
-            future: jsonDataFuture,
-            builder: (context, snapshot) {
-              setCountries();
-              return ReactiveDropDownWidget(
-                formControl: widget.countryFormControl,
-                label: widget.countryLabel ?? 'Country/Region',
-                validationMessages: {
-                  ValidationMessage.required: 'This field is required'
-                },
-                onChanged: (value) => _onSelectedCountry(value!),
-                items: _availableCountries.map((String dropDownStringItem) {
+          future: jsonDataFuture,
+          builder: (context, snapshot) {
+            setCountries();
+            return ReactiveDropDownWidget(
+              formControl: widget.countryFormControl,
+              label: widget.countryLabel ?? 'Country/Region',
+              validationMessages: {
+                ValidationMessage.required: 'This field is required'
+              },
+              onChanged: (value) => _onSelectedCountry(value!),
+              items: _availableCountries.map(
+                (String dropDownStringItem) {
                   return DropdownMenuItem<String>(
                     child: Text(dropDownStringItem),
                     value: dropDownStringItem,
                   );
-                }).toList(),
-                suffixWidget: widget.suffixWidget,
-              );
-            }),
+                },
+              ).toList(),
+              suffixWidget: widget.suffixWidget,
+            );
+          },
+        ),
         SizedBox(
           height: 16,
         ),
         FutureBuilder<List>(
-            future: jsonDataFuture,
-            builder: (context, snapshot) {
-              return ReactiveValueListenableBuilder(
-                formControl: widget.countryFormControl,
-                builder: (context, control, child) {
-                  setStates();
-                  return ReactiveDropDownWidget(
-                    formControl: widget.stateFormControl,
-                    label: widget.stateLabel ?? 'State',
-                    validationMessages: {
-                      ValidationMessage.required: 'This field is required'
-                    },
-                    onChanged: (value) => _onSelectedState(value!),
-                    items: _availableStates.map((String dropDownStringItem) {
+          future: jsonDataFuture,
+          builder: (context, snapshot) {
+            return ReactiveValueListenableBuilder(
+              formControl: widget.countryFormControl,
+              builder: (context, control, child) {
+                setStates();
+                return ReactiveDropDownWidget(
+                  formControl: widget.stateFormControl,
+                  label: widget.stateLabel ?? 'State',
+                  validationMessages: {
+                    ValidationMessage.required: 'This field is required'
+                  },
+                  onChanged: (value) => _onSelectedState(value!),
+                  items: _availableStates.map(
+                    (String dropDownStringItem) {
                       return DropdownMenuItem<String>(
                         child: Text(dropDownStringItem),
                         value: dropDownStringItem,
                       );
-                    }).toList(),
-                    suffixWidget: widget.suffixWidget,
-                  );
-                },
-              );
-            }),
-        SizedBox(
-          height: 16,
+                    },
+                  ).toList(),
+                  suffixWidget: widget.suffixWidget,
+                );
+              },
+            );
+          },
         ),
-        FutureBuilder<List>(
-            future: jsonDataFuture,
-            builder: (context, snapshot) {
-              return ReactiveValueListenableBuilder(
-                formControl: widget.stateFormControl,
-                builder: (context, control, child) {
-                  setCities();
-                  return ReactiveDropDownWidget(
-                    formControl: widget.cityFormControl,
-                    label: widget.cityLabel ?? 'City',
-                    validationMessages: {
-                      ValidationMessage.required: 'This field is required'
-                    },
-                    onChanged: (value) => _onSelectedCity(value!),
-                    items: _availableCities.map((String dropDownStringItem) {
-                      return DropdownMenuItem<String>(
-                        child: Text(dropDownStringItem),
-                        value: dropDownStringItem,
-                      );
-                    }).toList(),
-                    suffixWidget: widget.suffixWidget,
-                  );
-                },
-              );
-            }),
+        // SizedBox(
+        //   height: 16,
+        // ),
+        // FutureBuilder<List>(
+        //   future: jsonDataFuture,
+        //   builder: (context, snapshot) {
+        //     return ReactiveValueListenableBuilder(
+        //       formControl: widget.stateFormControl,
+        //       builder: (context, control, child) {
+        //         setCities();
+        //         return ReactiveDropDownWidget(
+        //           formControl: widget.cityFormControl,
+        //           label: widget.cityLabel ?? 'City',
+        //           validationMessages: {
+        //             ValidationMessage.required: 'This field is required'
+        //           },
+        //           onChanged: (value) => _onSelectedCity(value!),
+        //           items: _availableCities.map(
+        //             (String dropDownStringItem) {
+        //               return DropdownMenuItem<String>(
+        //                 child: Text(dropDownStringItem),
+        //                 value: dropDownStringItem,
+        //               );
+        //             },
+        //           ).toList(),
+        //           suffixWidget: widget.suffixWidget,
+        //         );
+        //       },
+        //     );
+        //   },
+        // ),
       ],
     );
+  }
+}
+
+class CountryStateCityData {
+  static getJsonData() async {
+    var res = await rootBundle.loadString(
+      'packages/country_state_city_picker/lib/assets/country.json',
+    );
+    var jsonResponse = jsonDecode(res) as List;
+    return jsonResponse;
   }
 }
